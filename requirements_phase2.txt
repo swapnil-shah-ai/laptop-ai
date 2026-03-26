@@ -1,0 +1,13 @@
+# Laptop AI - Phase 2: Fine-tuning
+# Additional requirements beyond Phase 1
+
+# Fine-tuning
+torch>=2.0.0
+transformers>=4.40.0
+peft>=0.11.0
+datasets>=2.19.0
+accelerate>=0.30.0
+sentencepiece>=0.2.0
+
+# Export to GGUF for Ollama
+# (llama-cpp-python installed separately if needed)

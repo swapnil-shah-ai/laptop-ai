@@ -1,6 +1,20 @@
 # Database
 chroma_db/
 
+# Phase 2 - Fine-tuning artifacts
+swapnil-lora/
+swapnil-merged/
+training_checkpoints/
+training_data.jsonl
+swapnil_writing.txt
+convert_hf_to_gguf.py
+quick_test.py
+Modelfile
+*.gguf
+*.safetensors
+*.pt
+*.bin
+
 # Python
 __pycache__/
 *.pyc
