@@ -1,45 +1,57 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Phase 1: RAG — Scan your entire laptop, chunk every document, embed locally, query via terminal. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
-## What This Does
+## What This Is
 
-You run one command. It crawls your laptop — every PDF, Word doc, Excel sheet, PowerPoint, text file, code file. Chunks them intelligently. Embeds them locally using Ollama. Stores them in ChromaDB. Then you open a terminal chat and ask questions about YOUR files. It answers with source citations.
+A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-No data leaves your machine. Ever.
+Two phases are live. Two more are coming.
 
-## Stack
+| Phase | What It Does | Status |
+|-------|-------------|--------|
+| **1. RAG** | Search your files, get answers with sources | ✅ Live |
+| **2. Fine-tune** | Model learns your writing style via LoRA | ✅ Live |
+| **3. Distill** | Big model teaches small model (coming) | 🔜 |
+| **4. Predict** | Anticipate which files you'll need (coming) | 🔜 |
+
+Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
+
+---
+
+## Phase 1: RAG — Knowledge Retrieval
+
+Crawls your laptop, chunks every document, embeds locally, stores in ChromaDB. Ask questions about YOUR files via terminal. Answers come with source citations.
+
+### Stack
 
 | Component | Tool | Why |
 |-----------|------|-----|
 | Embeddings | Ollama + nomic-embed-text | Local, free, fast |
 | LLM | Ollama + Mistral 7B | Runs on 16GB RAM |
 | Vector DB | ChromaDB | Local, no server needed |
-| Orchestration | LangChain | Industry standard |
 | File parsing | pypdf, python-docx, openpyxl, python-pptx | One loader per file type |
 
-## Setup (Windows)
+### Setup
 
-### 1. Install Ollama
+**1. Install Ollama**
 
-Download from [ollama.com](https://ollama.com/download). Install. Then open a terminal:
+Download from [ollama.com](https://ollama.com/download). Install. Then:
 
 ```bash
 ollama pull nomic-embed-text
 ollama pull mistral
 ```
 
-This downloads the embedding model (~274MB) and the LLM (~4.1GB). One-time download.
-
-### 2. Clone and Install
+**2. Clone and install**
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/laptop-ai.git
+git clone https://github.com/swapnil-shah-ai/laptop-ai.git
 cd laptop-ai
 pip install -r requirements.txt
 ```
 
-### 3. Configure
+**3. Configure**
 
 Edit `config.yaml` — set your scan paths:
 
@@ -47,33 +59,25 @@ Edit `config.yaml` — set your scan paths:
 scan_paths:
   - C:/Users/YourName/Documents
   - C:/Users/YourName/Desktop
-  - D:/Projects
 ```
 
-Or scan everything under your user folder (default):
+**4. Pre-flight check**
 
-```yaml
-scan_paths:
-  - C:/Users/YourName
+```bash
+python check.py
 ```
 
-### 4. Scan
+Green across the board = ready to go.
 
-Make sure Ollama is running (it starts automatically on install, or run `ollama serve`).
+**5. Scan**
 
 ```bash
 python scan.py
 ```
 
-This will:
-1. **Crawl** — find every supported file
-2. **Chunk** — extract text and split intelligently
-3. **Embed** — create vector embeddings via Ollama
-4. **Store** — save to local ChromaDB
+Crawls → chunks → embeds → stores. First scan takes 1-6 hours depending on file count and hardware. Close the laptop lid if needed — just don't close the terminal.
 
-First scan takes time depending on file count. Subsequent runs are faster.
-
-### 5. Query
+**6. Query**
 
 ```bash
 python query.py
@@ -81,37 +85,14 @@ python query.py
 
 Ask anything:
 ```
-You: What does the Enterprise AI Bible say about RAG architecture?
-You: Find all references to Mistral in my documents
-You: What were the key decisions in the Q3 board deck?
-You: Show me everything related to customer churn
+You: What was the final pricing we submitted?
+You: What does the Enterprise AI Bible say about RAG?
+You: Find all references to Q3 in my documents
+You: stats
+You: sources
 ```
 
-Special commands:
-- `stats` — show database statistics
-- `sources` — list all indexed files
-- `quit` — exit
-
-### Single Question Mode
-
-```bash
-python query.py --ask "What is our pricing strategy?"
-```
-
-## File Types Supported
-
-| Type | Extensions | How It's Chunked |
-|------|-----------|-----------------|
-| PDF | .pdf | By page, then paragraphs |
-| Word | .docx | Paragraphs + tables |
-| Excel | .xlsx, .xls | By sheet, rows with headers |
-| PowerPoint | .pptx | By slide |
-| CSV | .csv | Rows with column headers |
-| Text/Code | .txt, .md, .py, .js, .ts, .html, .css | Paragraphs |
-| Config | .json, .yaml, .yml | Structured text |
-| Logs | .log | Paragraphs |
-
-## Architecture
+### Architecture
 
 ```
 ┌─────────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -126,32 +107,151 @@ python query.py --ask "What is our pricing strategy?"
 └─────────────┘     └──────────┘     └──────────┘     └──────────┘
 ```
 
-## The 4-Weekend Learning Journey
+### File Types Supported
 
-This is **Phase 1** of a 4-phase project:
+PDF, DOCX, XLSX, XLS, PPTX, CSV, TXT, MD, JSON, YAML, PY, JS, TS, HTML, CSS, LOG — each chunked intelligently by file type.
 
-| Phase | What You Build | What You Learn |
-|-------|---------------|----------------|
-| **1. RAG** (this) | Scan laptop → chunk → embed → query | How enterprise RAG actually works |
-| **2. Fine-tune** | Train on your writing style | How fine-tuning changes model behavior |
-| **3. Distill** | Claude answers → train local Mistral 7B | How knowledge distillation works |
-| **4. ML Predict** | Anticipate which files you'll need | How predictive ML layers work |
+---
 
-Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
+## Phase 2: Fine-Tuning — Behavior Change
 
-## Reset
+Teaches a local model YOUR writing style using LoRA (Low-Rank Adaptation). You provide writing samples, the model learns your tone, rhythm, vocabulary. After training, it writes like you — not like a generic AI.
 
-To wipe the database and re-scan:
+### How It Works
+
+1. You collect your writing — LinkedIn posts, DMs, emails, WhatsApp messages
+2. `prepare_data.py` creates instruction-response training pairs
+3. `finetune.py` trains a LoRA adapter on your writing (0.1% of model weights)
+4. `export_ollama.py` merges the adapter and creates a custom Ollama model
+5. `test_finetune.py` compares base model vs your fine-tuned model side by side
+
+### Setup
+
+**1. Install Phase 2 dependencies**
 
 ```bash
-python scan.py --reset
+pip install -r requirements_phase2.txt
 ```
+
+This adds PyTorch, HuggingFace Transformers, PEFT (LoRA library), and datasets.
+
+**2. Collect your writing**
+
+Create a text file with your writing samples — the more, the better. Minimum 50 samples recommended. Include LinkedIn posts, emails, DMs, anything where your voice comes through.
+
+```bash
+# Save as my_writing.txt in the laptop-ai folder
+```
+
+**3. Prepare training data**
+
+```bash
+python prepare_data.py --input my_writing.txt --output training_data.jsonl
+```
+
+Note: The current `prepare_data.py` has hardcoded training pairs as a reference implementation. For your own writing, you'll need to modify the `create_training_pairs()` function to parse your text file and create instruction-response pairs. Each pair needs a context ("Write a cold DM to a startup CEO") and your actual writing as the response.
+
+**4. Fine-tune**
+
+```bash
+# For 16GB RAM (no GPU)
+python finetune.py --model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --lora-rank 4
+
+# For 32GB RAM or GPU
+python finetune.py --model microsoft/phi-3-mini-4k-instruct
+
+# Quick test (1 epoch)
+python finetune.py --model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --epochs 1
+```
+
+Training takes 1-3 hours on CPU for TinyLlama, longer for larger models.
+
+**5. Export to Ollama**
+
+```bash
+python export_ollama.py --base-model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --name my-custom-model
+```
+
+**6. Test**
+
+```bash
+python test_finetune.py --finetuned my-custom-model
+```
+
+**7. Use in RAG pipeline**
+
+Update `config.yaml`:
+
+```yaml
+llm_model: my-custom-model
+```
+
+Now your RAG answers come in YOUR voice.
+
+### Key Concepts
+
+- **RAG = Knowledge.** What the model knows about (your files). Changes frequently, no retraining needed.
+- **Fine-tuning = Behavior.** How the model writes (your style). Baked into weights, permanent.
+- **LoRA = Efficient fine-tuning.** Freezes 99.9% of the model, trains only 0.1%. Makes fine-tuning possible on consumer hardware.
+
+### Tips for Better Results
+
+- **More data = better results.** 30 samples is the minimum. 100+ is where it gets good.
+- **Diverse examples.** Include formal emails, casual messages, long posts, short replies.
+- **More epochs.** Try 5-10 epochs instead of 3 if results are weak.
+- **Bigger model.** If you have 32GB RAM or a GPU, use Phi-3 Mini or Mistral 7B instead of TinyLlama.
+
+---
+
+## What's Coming
+
+### Phase 3: Distillation — Knowledge Transfer
+
+Use a powerful API model (Claude, GPT-4) to answer questions via RAG. Save those high-quality answers. Train your local model on them. Result: local model answers like Claude, without ever calling Claude again. API bill drops to zero.
+
+### Phase 4: Predictive ML — Anticipation
+
+System learns your query patterns — what you ask, when, how often. Predicts what files you'll need before you ask. Basic ML (scikit-learn), not deep learning.
+
+---
 
 ## Hardware Requirements
 
-- **Minimum:** 8GB RAM, any modern CPU (embedding only, use smaller LLM)
-- **Recommended:** 16GB RAM, i5 or better (runs Mistral 7B comfortably)
-- **Storage:** ~2GB for models + database size depends on your files
+| Setup | RAM | What You Can Run |
+|-------|-----|-----------------|
+| Minimum | 8GB | Embedding + small LLM |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning |
+| Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
+
+## Project Structure
+
+```
+laptop-ai/
+├── config.yaml              # All settings — scan paths, models, chunk size
+├── check.py                 # Pre-flight verification
+├── crawler.py               # Walks file system, finds indexable files
+├── chunker.py               # Extracts text from 10+ file types, splits into chunks
+├── scan.py                  # Phase 1: Crawl → chunk → embed → store
+├── query.py                 # Phase 1: Terminal chat with RAG
+├── prepare_data.py          # Phase 2: Create training pairs from writing samples
+├── finetune.py              # Phase 2: LoRA fine-tuning
+├── export_ollama.py         # Phase 2: Export fine-tuned model to Ollama
+├── test_finetune.py         # Phase 2: Compare base vs fine-tuned model
+├── requirements.txt         # Phase 1 dependencies
+├── requirements_phase2.txt  # Phase 2 dependencies
+├── CHEATSHEET.md            # All AI concepts explained in one page
+└── .gitignore
+```
+
+## Reset
+
+```bash
+# Wipe RAG database and re-scan
+python scan.py --reset
+
+# Wipe fine-tuning and start fresh
+# Delete swapnil-lora/ and swapnil-merged/ folders manually
+```
 
 ## License
 
@@ -159,4 +259,4 @@ MIT
 
 ---
 
-*Built as an open-source learning project. Not another RAG tutorial — a working system you run on your own files.*
+*Built by a non-engineer on a ₹50K laptop with 16GB RAM and no GPU. Not another RAG tutorial — a working system you run on your own files, that answers in your own voice.*
