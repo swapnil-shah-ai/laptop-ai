@@ -1,0 +1,91 @@
+# ============================================================
+# Laptop AI - Configuration
+# ============================================================
+# Edit scan_paths to control what gets indexed.
+# Everything else has sane defaults.
+# ============================================================
+
+# --- Where to scan ---
+# Add your paths here. Use forward slashes even on Windows.
+# Examples:
+#   - C:/Users/Swapnil Shah/Documents
+#   - C:/Users/Swapnil Shah/Desktop
+#   - D:/Projects
+scan_paths:
+  - C:/Users
+
+# --- File types to index ---
+supported_extensions:
+  - .pdf
+  - .docx
+  - .xlsx
+  - .xls
+  - .csv
+  - .txt
+  - .md
+  - .pptx
+  - .json
+  - .yaml
+  - .yml
+  - .log
+  - .py
+  - .js
+  - .ts
+  - .html
+  - .css
+
+# --- Folders to skip (case-insensitive) ---
+skip_folders:
+  - node_modules
+  - .git
+  - __pycache__
+  - .venv
+  - venv
+  - env
+  - .env
+  - AppData
+  - ProgramData
+  - Program Files
+  - Program Files (x86)
+  - Windows
+  - .cache
+  - .npm
+  - .npm-global
+  - .expo
+  - .nuget
+  - .dotnet
+  - .android
+  - .gradle
+  - Recycle.Bin
+  - $Recycle.Bin
+  - System Volume Information
+  - Recovery
+  - MicrosoftEdgeBackups
+  - Intel
+  - AMD
+
+# --- Files to skip ---
+skip_files:
+  - package-lock.json
+  - yarn.lock
+  - Thumbs.db
+  - desktop.ini
+  - .DS_Store
+
+# --- Max file size (MB) - skip files larger than this ---
+max_file_size_mb: 50
+
+# --- Chunking ---
+chunk_size: 800          # tokens per chunk (sweet spot for retrieval)
+chunk_overlap: 100       # overlap between chunks for context continuity
+
+# --- Ollama models ---
+embedding_model: nomic-embed-text
+llm_model: mistral       # runs well on 16GB RAM
+
+# --- ChromaDB ---
+db_path: ./chroma_db     # where the vector database lives
+collection_name: laptop_files
+
+# --- Query ---
+top_k: 5                 # number of chunks to retrieve per query
