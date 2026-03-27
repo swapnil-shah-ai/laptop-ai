@@ -12,7 +12,7 @@ Two phases are live. Two more are coming.
 |-------|-------------|--------|
 | **1. RAG** | Search your files, get answers with sources | ✅ Live |
 | **2. Fine-tune** | Model learns your writing style via LoRA | ✅ Live |
-| **3. Distill** | Big model teaches small model (coming) | 🔜 |
+| **3. Distill** | Big model teaches small model | ✅ Live |
 | **4. Predict** | Anticipate which files you'll need (coming) | 🔜 |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
