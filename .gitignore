@@ -36,3 +36,12 @@ desktop.ini
 
 # Logs
 *.log
+
+query_log.csv
+distill_checkpoints/
+distill_questions.jsonl
+distill_training_data.jsonl
+teacher_answers.jsonl
+swapnil-distilled-lora/
+phase4_predict/models/
+phase4_predict/__pycache__/

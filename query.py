@@ -20,6 +20,7 @@ from rich.table import Table
 from rich.text import Text
 
 import chromadb
+from phase4_predict.logger import log_query
 
 console = Console()
 
@@ -55,7 +56,7 @@ def query_ollama(prompt: str, model: str) -> str:
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=300) as resp:
             data = json.loads(resp.read().decode())
             return data.get("response", "No response from model.")
     except Exception as e:
@@ -160,6 +161,8 @@ def retrieve_and_answer(question: str, collection, config: dict) -> None:
         
         console.print(f"  [{i}] {source}{extra_str}  [dim]relevance: {relevance}%[/dim]")
 
+# Phase 4: silently log this query for ML prediction
+    log_query(question, chunks)
 
 def interactive_mode(collection, config: dict):
     """Interactive chat loop."""
