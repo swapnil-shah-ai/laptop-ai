@@ -149,7 +149,21 @@ Create a text file with your writing samples — the more, the better. Minimum 5
 python prepare_data.py --input my_writing.txt --output training_data.jsonl
 ```
 
-Note: The current `prepare_data.py` has hardcoded training pairs as a reference implementation. For your own writing, you'll need to modify the `create_training_pairs()` function to parse your text file and create instruction-response pairs. Each pair needs a context ("Write a cold DM to a startup CEO") and your actual writing as the response.
+**How to collect your training data:**
+
+The script needs instruction-response pairs in JSONL format. Here's how to build them manually — this is the real skill, not the script.
+
+1. Go to your LinkedIn profile → Posts & Activity. Copy your best 30-50 posts into a text file.
+2. For each post, write a short instruction that would have prompted it. Example:
+```json
+   {"instruction": "Write a contrarian take on why enterprise AI projects fail", "response": "Your actual LinkedIn post text goes here..."}
+```
+
+3. Do the same with DMs, emails, WhatsApp messages — anything where your voice comes through.
+4. Save the file as `training_data.jsonl` in the laptop-ai folder (one JSON object per line).
+5. The more diverse the examples (formal + casual + short + long), the better the model captures your range.
+
+Minimum 30 pairs to see any effect. 100+ is where it gets good. The current `prepare_data.py` has reference examples showing the format — swap them with your own.
 
 **4. Fine-tune**
 
