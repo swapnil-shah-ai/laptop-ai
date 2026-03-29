@@ -28,13 +28,13 @@ import csv
 import os
 import sys
 import json
-import pickle
 import argparse
 from datetime import datetime
 from pathlib import Path
 from collections import Counter
 
 import numpy as np
+import joblib
 
 # -------------------------------------------------------------------
 # STEP 1: Load and parse the query log
@@ -46,8 +46,8 @@ LOG_PATH = os.path.join(
 )
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-MODEL_PATH = os.path.join(MODEL_DIR, "predictor.pkl")
-VECTORIZER_PATH = os.path.join(MODEL_DIR, "vectorizer.pkl")
+MODEL_PATH = os.path.join(MODEL_DIR, "predictor.joblib")
+VECTORIZER_PATH = os.path.join(MODEL_DIR, "vectorizer.joblib")
 META_PATH = os.path.join(MODEL_DIR, "meta.json")
 
 # Minimum queries needed. Below this, predictions are noise.
@@ -301,13 +301,11 @@ def predict_now(
 # -------------------------------------------------------------------
 
 def save_models(models, vectorizer, stats):
-    """Save trained models to disk."""
+    """Save trained models to disk using joblib for secure serialization."""
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    with open(MODEL_PATH, "wb") as f:
-        pickle.dump(models, f)
-    with open(VECTORIZER_PATH, "wb") as f:
-        pickle.dump(vectorizer, f)
+    joblib.dump(models, MODEL_PATH, compress=3)
+    joblib.dump(vectorizer, VECTORIZER_PATH, compress=3)
     with open(META_PATH, "w") as f:
         # Convert stats to JSON-serializable format
         serializable_stats = {}
@@ -327,14 +325,12 @@ def save_models(models, vectorizer, stats):
 
 
 def load_models():
-    """Load trained models from disk. Returns None if not found."""
+    """Load trained models from disk using joblib. Returns None if not found."""
     if not all(os.path.isfile(p) for p in [MODEL_PATH, VECTORIZER_PATH]):
         return None, None, None
 
-    with open(MODEL_PATH, "rb") as f:
-        models = pickle.load(f)
-    with open(VECTORIZER_PATH, "rb") as f:
-        vectorizer = pickle.load(f)
+    models = joblib.load(MODEL_PATH)
+    vectorizer = joblib.load(VECTORIZER_PATH)
     with open(META_PATH, "r") as f:
         meta = json.load(f)
 
