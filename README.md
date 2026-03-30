@@ -1,12 +1,12 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Four phases. Four weekends. Four levels of the enterprise AI stack.
+Five phases. Five levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
 |-------|-------------|---------------|--------|
@@ -14,6 +14,7 @@ Four phases. Four weekends. Four levels of the enterprise AI stack.
 | **2. Fine-tune** | Model learns your writing style via LoRA | Adapter training, behavior vs knowledge, PEFT | ✅ Live |
 | **3. Distill** | Big model teaches small model your domain | Knowledge distillation, teacher-student training | ✅ Live |
 | **4. Predict** | Anticipate which files you'll need | Feature engineering, Random Forest, TF-IDF, scheduled inference | ✅ Live |
+| **5. Agent** | Give it a goal, it plans and executes | Task decomposition, state management, tool selection, planning loop | ✅ Live |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
 
@@ -328,9 +329,72 @@ python phase4_predict/schedule.py --test               # Test now
 - **Cross-validation.** Measuring if the model actually learned patterns or just memorized the data.
 - **Scheduled inference.** Running predictions automatically — how ML works in production, not when a human remembers to trigger it.
 
-### This Is Not an Agent
+---
 
-Phase 4 predicts — it doesn't act. It tells you which files you'll probably need. It doesn't open them, email them, or prepare summaries. A Phase 5 agent layer would take these predictions and do something with them. That's not built yet.
+## Phase 5: Agent — Goal-Driven Execution
+
+You give the agent a goal in plain English. It breaks the goal into steps, picks the right tool for each step, runs them in order, handles failures, and gives you one combined result. Think of it as a project manager that coordinates Phases 1, 2 and 4 to get a job done.
+
+### How It Works
+
+1. You give it a goal: "prepare me for tomorrow's meeting"
+2. The planner (Phi3 Mini) breaks it into steps: predict files → search documents → write a briefing
+3. For each step, the agent picks a tool: SEARCH (Phase 1 RAG), WRITE (Phase 2 fine-tuned model), PREDICT (Phase 4 ML), or SUMMARIZE
+4. Results from each step feed into the next — the agent chains them together
+5. If a step fails, the agent logs it and moves on — it doesn't crash
+
+### Quick Start
+
+```bash
+cd phase5_agent
+
+# Interactive mode
+python agent.py
+
+# Single goal
+python agent.py "find everything about pricing and summarize it"
+python agent.py "prepare me for tomorrow's meeting"
+python agent.py "what will I need this Monday morning?"
+```
+
+### Architecture
+
+```
+┌──────────────┐
+│  Your Goal   │
+│  (plain      │
+│   English)   │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐     ┌─────────────────────────────────┐
+│   Planner    │────▶│  Step 1: PREDICT  [Phase 4 ML]  │
+│  (Phi3 Mini) │     │  Step 2: SEARCH   [Phase 1 RAG] │
+│              │     │  Step 3: WRITE    [Phase 2 LoRA] │
+│  Breaks goal │     │  Step 4: SUMMARIZE [Phi3]        │
+│  into steps  │     └─────────────┬───────────────────┘
+└──────────────┘                   │
+                                   ▼
+                    ┌──────────────────────────┐
+                    │  Results from each step  │
+                    │  chained together into   │
+                    │  one combined output     │
+                    └──────────────────────────┘
+```
+
+### The 5 Agent Concepts
+
+These are the building blocks of any AI agent — from this project to ChatGPT plugins to enterprise automation:
+
+- **Task decomposition.** Breaking "prepare me for tomorrow" into concrete steps. The planner LLM does this.
+- **State management.** Tracking what's done and what's next. A simple checklist — pending, running, done, failed.
+- **Tool selection.** For each step, picking the right function to call. SEARCH for finding information, WRITE for generating text, PREDICT for anticipating needs, SUMMARIZE for condensing.
+- **Error recovery.** When a tool fails, the agent doesn't stop. It logs the failure, skips the step, and continues. You see what worked and what didn't.
+- **Planning loop.** Each step receives results from all previous steps as context. Step 3 knows what step 1 predicted and what step 2 found. The agent chains — it doesn't just run steps in isolation.
+
+### Key Insight
+
+The agent's quality depends on two things: the planner model's intelligence (how well it breaks down goals) and the tool quality (how well each phase works). Swap Phi3 for a larger model and the plans get smarter. Improve your RAG data and search results get better. The agent framework stays the same — it's the orchestration layer, not the intelligence layer.
 
 ---
 
@@ -339,7 +403,7 @@ Phase 4 predicts — it doesn't act. It tells you which files you'll probably ne
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -364,9 +428,11 @@ laptop-ai/
 │   ├── generate_demo_data.py # Synthetic data for instant testing
 │   ├── schedule.py          # Windows Task Scheduler for daily predictions
 │   └── requirements.txt     # Phase 4 dependencies (scikit-learn, numpy)
+├── phase5_agent/            # Phase 5: Goal-driven agent
+│   └── agent.py             # Planner + tools + state + execution loop
+├── CHEATSHEET.pdf           # Enterprise AI concepts — 7-page reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
-├── CHEATSHEET.md            # All AI concepts explained in one page
 └── .gitignore
 ```
 
@@ -388,4 +454,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a ₹50K laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 4-phase learning journey through the full enterprise AI stack, from retrieval to prediction.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 5-phase learning journey through the full enterprise AI stack, from retrieval to autonomous agents.*
