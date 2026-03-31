@@ -1,12 +1,12 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Five phases. Five levels of the enterprise AI stack.
+Six phases. Six levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
 |-------|-------------|---------------|--------|
@@ -15,6 +15,7 @@ Five phases. Five levels of the enterprise AI stack.
 | **3. Distill** | Big model teaches small model your domain | Knowledge distillation, teacher-student training | ✅ Live |
 | **4. Predict** | Anticipate which files you'll need | Feature engineering, Random Forest, TF-IDF, scheduled inference | ✅ Live |
 | **5. Agent** | Give it a goal, it plans and executes | Task decomposition, state management, tool selection, planning loop | ✅ Live |
+| **6. Autonomous** | Agent catches its own mistakes and retries | Reflection, self-correction, ReAct loop, goal convergence | ✅ Live |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
 
@@ -398,12 +399,68 @@ The agent's quality depends on two things: the planner model's intelligence (how
 
 ---
 
+## Phase 6: Autonomous Agent — Self-Correction
+
+Phase 5 plans and executes. If a step produces garbage, it moves on without noticing. Phase 6 adds reflection — after every step, the agent evaluates its own output. If the result is poor, it retries with a different approach. It catches its own mistakes without you telling it to.
+
+Phase 5 = student who submits the first draft. Phase 6 = student who rereads, fixes weak parts, then submits.
+
+### How It Works
+
+1. Same planning and tool selection as Phase 5
+2. After each step executes, the agent evaluates the result: "was this good enough?"
+3. Evaluation uses deterministic checks first (is it empty? too short? contains an error?) then asks the LLM a binary relevance question
+4. If the result fails evaluation, the agent retries with a simpler instruction
+5. Maximum 2 retries per step — then it accepts the best available and flags it as "accepted with issues"
+6. Every evaluation is logged in a reflection log so you can see the agent's reasoning
+
+### Quick Start
+
+```bash
+cd phase6_autonomous
+
+# Interactive mode
+python autonomous_agent.py
+
+# Single goal
+python autonomous_agent.py "find everything about pricing and summarize it"
+
+# Side-by-side comparison: Phase 5 vs Phase 6 on the same goal
+python autonomous_agent.py --compare "prepare me for tomorrow's meeting"
+```
+
+### The 4 New Concepts
+
+These build on Phase 5's foundation. The industry calls this the ReAct pattern (reason, act, observe, reason again):
+
+- **Evaluate.** After each step, check the result. Deterministic rules catch obvious failures (empty, too short, error messages). The LLM handles subjective checks (is this relevant?).
+- **Retry.** When evaluation fails, don't repeat the same instruction. Change the approach — simplify, rephrase, make it more specific. Each retry is different from the last.
+- **Reflect.** Log every attempt — what was tried, what happened, pass or fail, why. This is the agent's thinking-about-its-own-thinking, visible in the output.
+- **Converge.** The agent needs to know when to stop. Max 2 retries prevents infinite loops. If retries are exhausted, accept the best result and be honest about it.
+
+### What the Comparison Shows
+
+Running `--compare` on the same goal reveals the difference:
+
+- Phase 5 marks garbage output as "done" — it doesn't know the difference
+- Phase 6 catches that same garbage, retries with a simpler approach, and produces a better result
+- Phase 5 says "4 clean, 0 failed" when 2 results were actually unusable
+- Phase 6 says "3 clean, 0 with issues" and tells you exactly what it caught
+
+The trade-off: Phase 6 takes longer (evaluation + retries add time). But the output is honest and better.
+
+### Key Insight
+
+Reflection can't fix a broken tool. If the underlying model is too small or the data is too sparse, no amount of retrying will produce a good result. But reflection tells you the tool is broken — instead of silently passing garbage to the next step. That's the difference between an agent that fails silently and an agent you can trust.
+
+---
+
 ## Hardware Requirements
 
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -430,7 +487,9 @@ laptop-ai/
 │   └── requirements.txt     # Phase 4 dependencies (scikit-learn, numpy)
 ├── phase5_agent/            # Phase 5: Goal-driven agent
 │   └── agent.py             # Planner + tools + state + execution loop
-├── CHEATSHEET.pdf           # Enterprise AI concepts — 7-page reference
+├── phase6_autonomous/       # Phase 6: Autonomous agent with reflection
+│   └── autonomous_agent.py  # ReAct loop + evaluation + retry + compare mode
+├── CHEATSHEET.pdf           # Enterprise AI concepts — 9-page reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
 └── .gitignore
@@ -454,4 +513,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 5-phase learning journey through the full enterprise AI stack, from retrieval to autonomous agents.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 6-phase learning journey through the full enterprise AI stack, from retrieval to autonomous agents that catch their own mistakes.*
