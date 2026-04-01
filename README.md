@@ -1,12 +1,12 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Six phases. Six levels of the enterprise AI stack.
+Seven phases. Seven levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
 |-------|-------------|---------------|--------|
@@ -16,6 +16,7 @@ Six phases. Six levels of the enterprise AI stack.
 | **4. Predict** | Anticipate which files you'll need | Feature engineering, Random Forest, TF-IDF, scheduled inference | ✅ Live |
 | **5. Agent** | Give it a goal, it plans and executes | Task decomposition, state management, tool selection, planning loop | ✅ Live |
 | **6. Autonomous** | Agent catches its own mistakes and retries | Reflection, self-correction, ReAct loop, goal convergence | ✅ Live |
+| **7. Multi-agent** | Two different models debate a decision | Agent identity, agent communication, convergence, judge pattern | ✅ Live |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
 
@@ -455,12 +456,54 @@ Reflection can't fix a broken tool. If the underlying model is too small or the 
 
 ---
 
+## Phase 7: Multi-Agent Debate — Different Models, Different Reasoning
+
+Phase 5 is one agent calling tools. Phase 6 is one agent evaluating itself. Phase 7 is agents talking to each other — two genuinely different AI models debating a business decision from opposing perspectives, with a judge synthesizing the result.
+
+This isn't one model pretending to be two people. Mistral 7B and Phi3 3.8B have different architectures, different training data, different reasoning patterns. The debate produces genuinely different arguments, not stylistic variations of the same logic.
+
+### How It Works
+
+1. You type a business decision: "should we build or buy our AI stack?"
+2. The LLM dynamically generates two opposing roles — e.g. "Enterprise CTO" vs "CFO". Different topic = different roles. Nothing hardcoded.
+3. Agent A (Mistral 7B) argues its position. Agent B (Phi3 3.8B) counters. They go back and forth for 3 rounds, each seeing what the other just said.
+4. After each round, both agents rate their confidence (1-10). The system tracks whether they're converging or polarizing.
+5. A judge reads the full debate transcript and delivers a verdict: where they agreed, where they disagreed, strongest arguments from each side, and a recommendation.
+
+### Quick Start
+
+```bash
+cd phase7_multiagent
+
+# Interactive mode
+python debate.py
+
+# Single topic
+python debate.py "should we build or buy our AI stack"
+
+# More rounds
+python debate.py "should startups raise VC or bootstrap" --rounds 5
+```
+
+### The 4 New Concepts
+
+- **Agent identity.** The LLM generates roles dynamically based on the topic. Different decision = different debaters. Industry term: agent roles or agent personas.
+- **Agent communication.** One agent's output becomes another agent's input. Agent B sees what Agent A just argued and responds to it specifically. Industry term: message passing or inter-agent communication.
+- **Convergence.** After each round, agents rate their confidence 1-10. The system tracks whether they're moving toward agreement (converging) or staying apart (polarizing). This tells you if the debate is productive or stuck.
+- **Judge pattern.** A third call reads the full debate and synthesizes. Where did they agree? Where did they disagree? What should a decision-maker consider? Industry term: LLM-as-judge. This is exactly what Microsoft shipped as "Critique" in Copilot Researcher.
+
+### Key Insight
+
+Most multi-agent demos use one model with different prompts — fake diversity. This uses two genuinely different models producing genuinely different reasoning. Two actually different brains is more diverse than a thousand copies of one brain with different names.
+
+---
+
 ## Hardware Requirements
 
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -489,6 +532,8 @@ laptop-ai/
 │   └── agent.py             # Planner + tools + state + execution loop
 ├── phase6_autonomous/       # Phase 6: Autonomous agent with reflection
 │   └── autonomous_agent.py  # ReAct loop + evaluation + retry + compare mode
+├── phase7_multiagent/       # Phase 7: Multi-agent debate
+│   └── debate.py            # Two models debate + convergence + judge verdict
 ├── CHEATSHEET.pdf           # Enterprise AI concepts — 9-page reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
@@ -513,4 +558,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 6-phase learning journey through the full enterprise AI stack, from retrieval to autonomous agents that catch their own mistakes.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 7-phase learning journey through the full enterprise AI stack, from retrieval to multi-agent debate.*
