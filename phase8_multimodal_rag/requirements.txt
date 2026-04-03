@@ -1,0 +1,16 @@
+# Phase 8 — Conversational Multimodal RAG
+# Install: pip install -r requirements.txt
+
+# Core
+chromadb>=0.5.0
+ollama>=0.4.0
+
+# Vision embedder (nomic-embed-vision-v1.5 via HF)
+transformers>=4.40.0
+torch>=2.0.0
+Pillow>=10.0.0
+einops>=0.7.0
+
+# Document extraction
+PyPDF2>=3.0.0
+python-docx>=1.0.0
