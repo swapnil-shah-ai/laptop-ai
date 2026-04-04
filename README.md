@@ -1,15 +1,15 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Ask about your images and documents together. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Seven phases. Seven levels of the enterprise AI stack.
+Eight phases. Eight levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
-|-------|-------------|---------------|--------|
+|-------|-------------|----------------|--------|
 | **1. RAG** | Search your files, get answers with sources | Embeddings, vector databases, retrieval, generation | ✅ Live |
 | **2. Fine-tune** | Model learns your writing style via LoRA | Adapter training, behavior vs knowledge, PEFT | ✅ Live |
 | **3. Distill** | Big model teaches small model your domain | Knowledge distillation, teacher-student training | ✅ Live |
@@ -17,6 +17,7 @@ Seven phases. Seven levels of the enterprise AI stack.
 | **5. Agent** | Give it a goal, it plans and executes | Task decomposition, state management, tool selection, planning loop | ✅ Live |
 | **6. Autonomous** | Agent catches its own mistakes and retries | Reflection, self-correction, ReAct loop, goal convergence | ✅ Live |
 | **7. Multi-agent** | Two different models debate a decision | Agent identity, agent communication, convergence, judge pattern | ✅ Live |
+| **8. Multimodal RAG** | Ask about text files AND images together | Multimodal embeddings, shared latent space, cross-modal retrieval, conversational context | ✅ Live |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
 
@@ -41,14 +42,14 @@ Crawls your laptop, chunks every document, embeds locally, stores in ChromaDB. A
 
 Download from [ollama.com](https://ollama.com/download). Install. Then:
 
-```bash
+```
 ollama pull nomic-embed-text
 ollama pull mistral
 ```
 
 **2. Clone and install**
 
-```bash
+```
 git clone https://github.com/swapnil-shah-ai/laptop-ai.git
 cd laptop-ai
 pip install -r requirements.txt
@@ -58,7 +59,7 @@ pip install -r requirements.txt
 
 Edit `config.yaml` — set your scan paths:
 
-```yaml
+```
 scan_paths:
   - C:/Users/YourName/Documents
   - C:/Users/YourName/Desktop
@@ -66,7 +67,7 @@ scan_paths:
 
 **4. Pre-flight check**
 
-```bash
+```
 python check.py
 ```
 
@@ -74,7 +75,7 @@ Green across the board = ready to go.
 
 **5. Scan**
 
-```bash
+```
 python scan.py
 ```
 
@@ -82,11 +83,12 @@ Crawls → chunks → embeds → stores. First scan takes 1-6 hours depending on
 
 **6. Query**
 
-```bash
+```
 python query.py
 ```
 
 Ask anything:
+
 ```
 You: What was the final pricing we submitted?
 You: What does the Enterprise AI Bible say about RAG?
@@ -132,7 +134,7 @@ Teaches a local model YOUR writing style using LoRA (Low-Rank Adaptation). You p
 
 **1. Install Phase 2 dependencies**
 
-```bash
+```
 pip install -r requirements_phase2.txt
 ```
 
@@ -142,13 +144,13 @@ This adds PyTorch, HuggingFace Transformers, PEFT (LoRA library), and datasets.
 
 Create a text file with your writing samples — the more, the better. Minimum 50 samples recommended. Include LinkedIn posts, emails, DMs, anything where your voice comes through.
 
-```bash
+```
 # Save as my_writing.txt in the laptop-ai folder
 ```
 
 **3. Prepare training data**
 
-```bash
+```
 python prepare_data.py --input my_writing.txt --output training_data.jsonl
 ```
 
@@ -158,9 +160,10 @@ The script needs instruction-response pairs in JSONL format. Here's how to build
 
 1. Go to your LinkedIn profile → Posts & Activity. Copy your best 30-50 posts into a text file.
 2. For each post, write a short instruction that would have prompted it. Example:
-```json
+
+   ```json
    {"instruction": "Write a contrarian take on why enterprise AI projects fail", "response": "Your actual LinkedIn post text goes here..."}
-```
+   ```
 
 3. Do the same with DMs, emails, WhatsApp messages — anything where your voice comes through.
 4. Save the file as `training_data.jsonl` in the laptop-ai folder (one JSON object per line).
@@ -170,7 +173,7 @@ Minimum 30 pairs to see any effect. 100+ is where it gets good. The current `pre
 
 **4. Fine-tune**
 
-```bash
+```
 # For 16GB RAM (no GPU)
 python finetune.py --model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --lora-rank 4
 
@@ -185,13 +188,13 @@ Training takes 1-3 hours on CPU for TinyLlama, longer for larger models.
 
 **5. Export to Ollama**
 
-```bash
+```
 python export_ollama.py --base-model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --name my-custom-model
 ```
 
 **6. Test**
 
-```bash
+```
 python test_finetune.py --finetuned my-custom-model
 ```
 
@@ -199,7 +202,7 @@ python test_finetune.py --finetuned my-custom-model
 
 Update `config.yaml`:
 
-```yaml
+```
 llm_model: my-custom-model
 ```
 
@@ -238,7 +241,7 @@ Uses your larger local model (Mistral 7B) as a teacher. The teacher answers ques
 
 **2. Generate questions from your documents**
 
-```bash
+```
 python make_questions.py
 ```
 
@@ -246,7 +249,7 @@ This reads your indexed chunks and creates questions. Output: `distill_questions
 
 **3. Run distillation**
 
-```bash
+```
 python distill.py
 ```
 
@@ -274,7 +277,7 @@ Your laptop learns your file access patterns and predicts which documents you'll
 
 ### Quick Start (demo data)
 
-```bash
+```
 cd phase4_predict
 
 # Generate 300 synthetic query entries
@@ -295,7 +298,7 @@ python predict.py --stats
 
 **1. Install Phase 4 dependencies**
 
-```bash
+```
 pip install -r phase4_predict/requirements.txt
 ```
 
@@ -303,7 +306,7 @@ pip install -r phase4_predict/requirements.txt
 
 **3. Check your progress**
 
-```bash
+```
 python -c "from phase4_predict.logger import get_log_stats; print(get_log_stats())"
 ```
 
@@ -311,13 +314,13 @@ Need 50 queries for basic predictions, 200+ for reliable ones.
 
 **4. Train and predict**
 
-```bash
+```
 python phase4_predict/predict.py --retrain
 ```
 
 **5. Schedule daily predictions (optional)**
 
-```bash
+```
 python phase4_predict/schedule.py --install            # Daily 8 AM predictions
 python phase4_predict/schedule.py --install --time 09:30  # Change time
 python phase4_predict/schedule.py --test               # Test now
@@ -347,7 +350,7 @@ You give the agent a goal in plain English. It breaks the goal into steps, picks
 
 ### Quick Start
 
-```bash
+```
 cd phase5_agent
 
 # Interactive mode
@@ -417,7 +420,7 @@ Phase 5 = student who submits the first draft. Phase 6 = student who rereads, fi
 
 ### Quick Start
 
-```bash
+```
 cd phase6_autonomous
 
 # Interactive mode
@@ -472,7 +475,7 @@ This isn't one model pretending to be two people. Mistral 7B and Phi3 3.8B have 
 
 ### Quick Start
 
-```bash
+```
 cd phase7_multiagent
 
 # Interactive mode
@@ -498,12 +501,56 @@ Most multi-agent demos use one model with different prompts — fake diversity. 
 
 ---
 
+## Phase 8: Conversational Multimodal RAG — Text + Images
+
+Phase 1 searched text. Phase 8 searches text AND images together. Ask questions about your downloaded files — PDFs, documents, screenshots, photos — and get answers grounded in both. Gemma 4 E4B-IT sees the retrieved images natively. Conversational: it remembers what you asked before.
+
+### How It Works
+
+1. `ingest.py` scans your Downloads folder, embeds text chunks (nomic-embed-text via Ollama) and images (nomic-embed-vision via HuggingFace) into one ChromaDB collection — both produce 768-dim vectors in the same latent space
+2. `chat.py` takes your question, queries text and images separately (reserved slots for each so text doesn't dominate), passes retrieved context to Gemma 4 E4B-IT
+3. Gemma 4 reads both the text chunks and the actual images, generates an answer with source citations
+4. Conversation history is maintained across turns — 128K context window means ~200 turns before hitting the wall
+
+### Quick Start
+
+```bash
+# Pull models (one-time)
+ollama pull gemma4:e4b
+ollama pull nomic-embed-text
+
+# Install deps
+cd phase8_multimodal_rag
+pip install -r requirements.txt
+
+# Ingest your Downloads folder
+python ingest.py
+
+# Chat
+python chat.py
+```
+
+### The 6 New Concepts
+
+- **Shared latent space.** Text and image embedders produce vectors in the same coordinate system. A text query matches against both text chunks and images without separate pipelines.
+- **Cross-modal retrieval gap.** Text-to-image similarity (0.08) always scores lower than text-to-text (0.68). Fix: query text and images separately with reserved slots, or generate text captions for images during ingestion.
+- **Multimodal generation.** Gemma 4 natively sees images — no image-to-text conversion. Retrieved images are passed as actual image bytes alongside text chunks.
+- **Quantization.** Compressing model weights: FP16 → Q8 (half memory) → Q4 (quarter memory). Gemma 4 E4B at Q4 = 9.6GB. This is how large models run on laptops.
+- **Per-Layer Embeddings (PLE).** Gemma 4 has 8B total params but 4B effective at inference. Not MoE — different technique. Parameter count ≠ capability.
+- **Debug order.** When RAG answers are wrong, diagnose bottom-up: extraction (did the PDF text come out clean?) → retrieval (did the right chunks surface?) → generation (was the answer good?). Most teams waste months on prompt engineering when retrieval is broken.
+
+### Key Insight
+
+The hardest part of multimodal RAG isn't the model — it's the data pipeline. PDF extraction breaks on encrypted files, scanned documents and layout-heavy slides. Image retrieval fails when cross-modal similarity is too weak. Fix the data first, then fix the retrieval, then — and only then — touch the prompt.
+
+---
+
 ## Hardware Requirements
 
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate + multimodal RAG |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -534,7 +581,11 @@ laptop-ai/
 │   └── autonomous_agent.py  # ReAct loop + evaluation + retry + compare mode
 ├── phase7_multiagent/       # Phase 7: Multi-agent debate
 │   └── debate.py            # Two models debate + convergence + judge verdict
-├── CHEATSHEET.pdf           # Enterprise AI concepts — 9-page reference
+├── phase8_multimodal_rag/   # Phase 8: Conversational multimodal RAG
+│   ├── config.py            # Models, paths, chunking params
+│   ├── ingest.py            # Scan Downloads, embed text + images into ChromaDB
+│   └── chat.py              # Conversational interface with Gemma 4 E4B-IT
+├── CHEATSHEET.pdf           # Enterprise AI concepts — 10-page reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
 └── .gitignore
@@ -558,4 +609,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 7-phase learning journey through the full enterprise AI stack, from retrieval to multi-agent debate.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — an 8-phase learning journey through the full enterprise AI stack, from retrieval to multimodal RAG.*
