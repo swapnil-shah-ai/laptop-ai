@@ -45,3 +45,6 @@ teacher_answers.jsonl
 swapnil-distilled-lora/
 phase4_predict/models/
 phase4_predict/__pycache__/
+phase8_multimodal_rag/chroma_multimodal_db/ 
+memory.db 
+__pycache__/ 
