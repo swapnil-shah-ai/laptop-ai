@@ -1,12 +1,12 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Ask about your images and documents together. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Ask about your images and documents together. Give it permanent memory — it remembers who you are across sessions. Zero cloud. Zero API keys. Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Eight phases. Eight levels of the enterprise AI stack.
+Nine phases. Nine levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
 |-------|-------------|----------------|--------|
@@ -18,6 +18,7 @@ Eight phases. Eight levels of the enterprise AI stack.
 | **6. Autonomous** | Agent catches its own mistakes and retries | Reflection, self-correction, ReAct loop, goal convergence | ✅ Live |
 | **7. Multi-agent** | Two different models debate a decision | Agent identity, agent communication, convergence, judge pattern | ✅ Live |
 | **8. Multimodal RAG** | Ask about text files AND images together | Multimodal embeddings, shared latent space, cross-modal retrieval, conversational context | ✅ Live |
+| **9. Memory** | Laptop remembers you across sessions | Entity extraction, knowledge graph, cross-session persistence, memory deduplication | ✅ Live |
 
 Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
 
@@ -545,12 +546,79 @@ The hardest part of multimodal RAG isn't the model — it's the data pipeline. P
 
 ---
 
+## Phase 9: Memory Layer — Your Laptop Remembers You
+
+Phase 1-8 gave your laptop intelligence about your FILES. Phase 9 gives your laptop intelligence about YOU. It extracts facts and entity relationships from every conversation, stores them permanently and retrieves relevant ones in future sessions — without you re-explaining anything.
+
+A chatbot forgets you every session. An assistant remembers who you are. Phase 9 is the difference.
+
+### How It Works
+
+1. `memory.py` is the memory engine — three core functions: extract (pull facts and entities from a conversation using Gemma 4), store (save to ChromaDB + SQLite with deduplication), retrieve (query both before each inference)
+2. `chat_memory.py` wraps Phase 8's document retrieval and adds the memory layer on top. Three retrieval sources feed one answer: your documents (ChromaDB collection 1), your conversation memories (ChromaDB collection 2) and your entity relationships (SQLite)
+3. After each conversation turn, Gemma 4 runs an extraction prompt in the background — identifies facts worth remembering, entities (people, projects, companies) and relationships between them
+4. On next session startup, the system greets you with context from your last conversation
+
+### Quick Start
+
+```bash
+# Models already pulled from Phase 8
+# No new dependencies needed
+
+# Chat with memory
+python chat_memory.py
+```
+
+Commands during chat:
+```
+/memory        - view all stored facts, entities and relationships
+/memory clear  - wipe all memories and start fresh
+/quit          - exit
+```
+
+### Architecture
+
+```
+┌─────────────┐     ┌──────────────────────────────────────────────┐
+│  Your query │────▶│ Retrieve from 3 sources:                     │
+└─────────────┘     │  1. Documents (ChromaDB collection 1)        │
+                    │  2. Memories  (ChromaDB collection 2)        │
+                    │  3. Entity graph (SQLite relationships)      │
+                    └──────────────────┬────────────────────────────┘
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────────────────┐
+                    │ Gemma 4 generates answer using all 3 sources │
+                    └──────────────────┬───────────────────────────┘
+                                       │
+                                       ▼
+                    ┌──────────────────────────────────────────────┐
+                    │ Background: extract facts + entities from    │
+                    │ this exchange → store in collection 2 +      │
+                    │ SQLite → available for next turn / session    │
+                    └──────────────────────────────────────────────┘
+```
+
+### The 5 New Concepts
+
+- **Entity extraction.** After each turn, the LLM identifies people, projects, companies and topics mentioned in the exchange. "Get Soham's approval on Q3 budget" extracts Soham (person), Q3 budget (topic) and the relationship (needs approval from).
+- **Knowledge graph.** SQLite stores entity relationships with confidence scores. Mention Soham three times across three sessions and the confidence that he is your approver rises from 0.5 to 0.8. The graph gets smarter with use.
+- **Cross-session persistence.** Close the terminal, come back tomorrow, ask "anything urgent?" — the memory layer surfaces pending approvals, people and deadlines from yesterday without you re-explaining.
+- **Memory deduplication.** Same fact mentioned five times should not create five entries. Cosine similarity above 0.85 between a new fact and an existing one means duplicate — update timestamp, don't create new entry.
+- **Multi-source retrieval.** Documents answer "what's in my files." Memories answer "what have I been working on." Entity graph answers "who is connected to what." All three feed one prompt, one answer.
+
+### Key Insight
+
+Within a single session, memory adds zero value — conversation history handles context. Memory's entire value is cross-session persistence. The problem isn't tokens or context windows. The problem is that LLMs are stateless — every session starts from zero. Memory makes them stateful. That is the difference between a chatbot and an assistant.
+
+---
+
 ## Hardware Requirements
 
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate + multimodal RAG |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate + multimodal RAG + memory |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -585,7 +653,10 @@ laptop-ai/
 │   ├── config.py            # Models, paths, chunking params
 │   ├── ingest.py            # Scan Downloads, embed text + images into ChromaDB
 │   └── chat.py              # Conversational interface with Gemma 4 E4B-IT
-├── CHEATSHEET.pdf           # Enterprise AI concepts — 10-page reference
+├── memory.py                # Phase 9: Memory engine — extract, store, retrieve
+├── chat_memory.py           # Phase 9: Chat with persistent memory layer
+├── memory.db                # Phase 9: SQLite entity graph (auto-created, gitignored)
+├── CHEATSHEET.pdf           # Enterprise AI concepts — 11-page reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
 └── .gitignore
@@ -601,6 +672,9 @@ python scan.py --reset
 
 # Wipe Phase 4 predictions — retrain from scratch
 python phase4_predict/predict.py --retrain
+
+# Wipe Phase 9 memories — start fresh
+python -c "from memory import clear_memories; clear_memories()"
 ```
 
 ## License
@@ -609,4 +683,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — an 8-phase learning journey through the full enterprise AI stack, from retrieval to multimodal RAG.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 9-phase learning journey through the full enterprise AI stack, from retrieval to memory.*
