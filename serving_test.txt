@@ -1,0 +1,38 @@
+import urllib.request
+import json
+import threading
+import time
+
+def send_request(id):
+    start = time.time()
+    data = json.dumps({
+        "model": "phi3:mini",
+        "prompt": "Why is the sky blue? Answer in one sentence.",
+        "stream": False
+    }).encode()
+    req = urllib.request.Request(
+        "http://localhost:11434/api/generate",
+        data=data,
+        headers={"Content-Type": "application/json"}
+    )
+    response = urllib.request.urlopen(req)
+    result = json.loads(response.read())
+    end = time.time()
+    print(f"Request {id}: {end - start:.1f}s | Tokens generated: {result['eval_count']}")
+
+threads = []
+print("Firing 3 requests at the same time...")
+start_all = time.time()
+for i in range(1, 4):
+    t = threading.Thread(target=send_request, args=(i,))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+total = time.time() - start_all
+print(f"\nTotal time for all 3: {total:.1f}s")
+print(f"One request alone takes ~10s")
+print(f"If parallel: total would be ~10s")
+print(f"If queued: total would be ~30s")

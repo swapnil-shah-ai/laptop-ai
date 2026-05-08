@@ -1,0 +1,35 @@
+import urllib.request
+import json
+import threading
+import time
+
+def send_request(id):
+    start = time.time()
+    data = json.dumps({
+        "prompt": "Why is the sky blue? Answer in one sentence.",
+        "n_predict": 100
+    }).encode()
+    req = urllib.request.Request(
+        "http://localhost:8080/completion",
+        data=data,
+        headers={"Content-Type": "application/json"}
+    )
+    response = urllib.request.urlopen(req)
+    result = json.loads(response.read())
+    end = time.time()
+    print(f"Request {id}: {end - start:.1f}s | Tokens: {result.get('tokens_predicted', '?')}")
+
+threads = []
+print("Firing 3 requests at llama.cpp server (3 parallel slots)...")
+start_all = time.time()
+for i in range(1, 4):
+    t = threading.Thread(target=send_request, args=(i,))
+    threads.append(t)
+    t.start()
+
+for t in threads:
+    t.join()
+
+total = time.time() - start_all
+print(f"\nTotal time for all 3: {total:.1f}s")
+print(f"Compare with Ollama's {20.3:.1f}s for same test")

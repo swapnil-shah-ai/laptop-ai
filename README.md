@@ -1,12 +1,12 @@
 # Laptop AI — Build the Enterprise AI Stack on Your Laptop
 
-> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Ask about your images and documents together. Give it permanent memory — it remembers who you are across sessions. Zero cloud. Zero API keys. Everything runs on YOUR machine.
+> Scan your files. Ask questions. Get answers in YOUR voice. Predict what you'll need tomorrow. Give it a goal — it figures out the rest. Watch it catch its own mistakes. Watch two AI models debate a decision. Ask about your images and documents together. Give it permanent memory — it remembers who you are across sessions. Compress a model to 4-bit and run it on your laptop. Serve it as an API and test concurrent requests. Zero cloud. Zero API keys (except Phase 10). Everything runs on YOUR machine.
 
 ## What This Is
 
 A hands-on learning project that builds the enterprise AI stack from scratch — on a regular laptop. Not a framework. Not a tutorial. A working system you run on your own files.
 
-Nine phases. Nine levels of the enterprise AI stack.
+Twelve phases. Twelve levels of the enterprise AI stack.
 
 | Phase | What It Does | What You Learn | Status |
 |-------|-------------|----------------|--------|
@@ -19,8 +19,11 @@ Nine phases. Nine levels of the enterprise AI stack.
 | **7. Multi-agent** | Two different models debate a decision | Agent identity, agent communication, convergence, judge pattern | ✅ Live |
 | **8. Multimodal RAG** | Ask about text files AND images together | Multimodal embeddings, shared latent space, cross-modal retrieval, conversational context | ✅ Live |
 | **9. Memory** | Laptop remembers you across sessions | Entity extraction, knowledge graph, cross-session persistence, memory deduplication | ✅ Live |
+| **10. Always-on** | Agent runs on a schedule without being asked | Scheduled inference, API model calls, headless browsing | ✅ Live ([separate repo](https://github.com/swapnil-shah-ai/always-on)) |
+| **11. Quantization** | Compress a model from FP16 to Q4_K_M | Weights, parameters, BPW, quant level tradeoffs, llama.cpp | ✅ Live |
+| **12. Serving** | Make the model available as an API | Prefill vs decode, KV cache, concurrent requests, GPU memory economics | ✅ Live |
 
-Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop.
+Each phase builds on the previous. By the end, you have a complete enterprise AI stack — running on your laptop. Phase 10 (always-on agent) lives in a [separate repo](https://github.com/swapnil-shah-ai/always-on).
 
 ---
 
@@ -613,12 +616,132 @@ Within a single session, memory adds zero value — conversation history handles
 
 ---
 
+## Phase 10: Always-On Agent — Runs Without You
+
+> Phase 10 lives in a separate repository: [github.com/swapnil-shah-ai/always-on](https://github.com/swapnil-shah-ai/always-on)
+
+An agent that doesn't wait for you to ask. It runs on a schedule (7AM and 7PM daily), searches the open web for hiring signals, scores leads against your resume context and deduplicates past results. Outputs a daily brief of where to apply, who to contact and which career pages to check. Uses Claude Haiku (Anthropic API) + OpenClaw + headless browser.
+
+The shift: from reactive (you ask, it answers) to proactive (it works while you sleep).
+
+---
+
+## Phase 11: Quantization — Model Compression
+
+Phase 1-9 used pre-quantized models from Ollama without understanding what happened to them. Phase 11 opens that black box — you learn what weights are, why they can be compressed and how to do it yourself.
+
+### How It Works
+
+1. Understand that a model file is billions of numbers (weights) that got shaped during training. An 8B model = 8 billion numbers.
+2. Pull the same model at three quantization levels from Ollama — Q2_K (1.4GB), Q4_0 (2.2GB), Q8_0 (4.1GB) — and compare output quality, speed and file size on the same prompt
+3. Download the full-precision FP16 model (7.6GB) from Ollama
+4. Build llama.cpp from source on WSL2 Ubuntu
+5. Run `llama-quantize` to compress FP16 → Q4_K_M yourself — watch 7,288 MiB shrink to 2,285 MiB (3.2x compression)
+6. Import your hand-quantized model into Ollama, run the same prompt and compare against the pre-quantized version
+
+### Results
+
+| Model | Quant | Size | Speed | Quality |
+|-------|-------|------|-------|---------|
+| Q2_K | 2-bit | 1.4GB | 12.61 tok/s | Incoherent garbage |
+| Q4_0 (pre-quantized) | 4-bit | 2.2GB | 9.08 tok/s | Good |
+| Q4_K_M (hand-quantized) | ~5-bit avg | 2.4GB | 8.47 tok/s | Good |
+| Q8_0 | 8-bit | 4.1GB | 5.27 tok/s | Best |
+
+Q2 destroyed the model. Q4_K_M was the sweet spot. Q8 was cleanest but half the speed. The hand-quantized model matched the pre-quantized one — same tool, same process model publishers use.
+
+### Tools
+
+| Component | Tool | Why |
+|-----------|------|-----|
+| Quantization | llama.cpp (built from source) | Industry standard, GGUF format |
+| Model serving | Ollama | Easy import and comparison |
+| OS | WSL2 Ubuntu on Windows | llama.cpp builds cleanly on Linux |
+
+### The Key Concepts
+
+- **Weights and parameters.** Every number in a model file is a parameter. Training shapes them from random into values that produce coherent language. The frozen numbers ARE the model.
+- **Bits per weight (BPW).** How precisely each weight is stored. FP16 = 16 bits. Q4_K_M averages ~5 bits (gives important layers extra bits). Lower BPW = smaller file = faster inference = some quality loss.
+- **Q4_K_M naming.** Q4 = 4-bit base. K = k-quant (smarter grouping). M = medium (attention layers get more bits). This is the production default for most local deployments.
+- **GGUF.** The file format Ollama and llama.cpp use. CPU-friendly. The only format that matters for local inference.
+- **Open weights.** The company releases the trained numbers but not the training data or code. You can use it but not reproduce it.
+
+### Key Insight
+
+Quantization is why you can run models on your laptop at all. Without it, Gemma 4 at FP32 would need ~32GB of RAM. At Q4_K_M, it fits in 9.6GB. Same 8 billion numbers, stored with less precision. The speed difference between quant levels is not about intelligence — it's memory bandwidth. More bits per weight = more data to move through the same pipe = slower. Below Q4, quality collapses. Q4_K_M is the floor for production.
+
+---
+
+## Phase 12: Serving — Model to API
+
+Phase 1-11, you typed into a terminal and got answers. Phase 12 is the step that turns a model file into an endpoint applications can call. Without serving, a model is a file. With serving, it's a service.
+
+### How It Works
+
+1. Hit Ollama's REST API directly with `curl` — see the raw JSON response an application receives (not the pretty terminal chat)
+2. Write a Python script that fires 3 concurrent requests at Ollama simultaneously — watch them queue and measure total time
+3. Build and run llama.cpp server with `-np 3` (3 parallel request slots) — fire the same 3 requests and compare behavior
+4. Observe: Ollama interleaves requests (20.3s total), llama.cpp runs them truly in parallel (53.2s total, all finishing together) — parallel on CPU is slower per-request because resources are shared
+5. Compare short vs long prompts — see prefill time grow with input length, proving KV cache cost
+
+### Results
+
+| Setup | Request 1 | Request 2 | Request 3 | Total | Behavior |
+|-------|-----------|-----------|-----------|-------|----------|
+| Ollama (serial) | 10.5s | 15.8s | 20.3s | 20.3s | Fast per-request, queued |
+| llama.cpp -np 3 (parallel) | 53.0s | 53.2s | 53.2s | 53.2s | Slow per-request, simultaneous |
+
+On CPU, serial wins on total time. Parallel made each request slower because CPU/memory bandwidth is shared. On GPUs, this reverses completely — batching lets one GPU serve hundreds of users because GPUs are built for parallel math.
+
+### Tools
+
+| Component | Tool | Why |
+|-----------|------|-----|
+| API serving | Ollama (port 11434) | Already running, easy to test |
+| Parallel serving | llama.cpp server (port 8080) | Configurable parallel slots |
+| Load testing | Python (urllib + threading) | Fires concurrent requests, measures timing |
+
+### The Key Concepts
+
+- **Serving.** The layer between a model file and users. Handles loading, request routing, memory management and response streaming.
+- **Prefill vs decode.** Two phases per request. Prefill processes all input tokens in parallel (fast). Decode generates output tokens one at a time (slow). API providers charge more for output tokens because decode is sequential.
+- **KV cache.** Stores processed results of each token so the model doesn't recompute them. Grows linearly with conversation length. The largest memory cost in production serving.
+- **TTFT and TPS.** Time to first token (prefill latency) and tokens per second (decode speed). Customer-facing products optimize TTFT. Batch processing optimizes TPS.
+- **Throughput vs latency.** Latency = time for one request. Throughput = total tokens served per second. Parallel can improve throughput but hurt latency. A CPO decides which to optimize.
+
+### Serving Math
+
+```
+Model memory (GB) = parameters (B) x bits per weight / 8
+KV cache per token = KV buffer size / context length (measure from server output)
+Max concurrent users = (GPU memory - model size - overhead) / (KV per token x avg context per user)
+Cost per request = (input tokens x input price) + (output tokens x output price)
+```
+
+Example: A100 (80GB), 70B model at Q4 (~44GB), 2GB overhead. Free = 34GB. KV per user at 4,000 tokens ≈ 10GB. Max users = 34 / 10 = 3 concurrent users per GPU. One GPU, three users.
+
+### Serving Stack Selection
+
+| Stack | When to use |
+|-------|------------|
+| Ollama | Local development, single user |
+| llama.cpp server | Self-hosted, CPU or single GPU, 1-10 users |
+| vLLM | Production GPU serving at scale (continuous batching, PagedAttention) |
+| TGI (HuggingFace) | Production, HuggingFace ecosystem |
+| Triton (NVIDIA) | Enterprise, multi-model, NVIDIA support contracts |
+
+### Key Insight
+
+Serving is where the cost formula becomes real. Quantization decides model size in memory. KV cache decides per-user memory cost. Serving orchestrates both within available hardware. All three are interdependent — a CPO doesn't tune them individually. The reason companies spend on GPUs for serving: on CPU, parallel requests share resources and slow each other down. On GPU, batching lets multiple requests share the same weight-read with nearly zero overhead.
+
+---
+
 ## Hardware Requirements
 
 | Setup | RAM | What You Can Run |
 |-------|-----|-----------------|
 | Minimum | 8GB | Embedding + small LLM |
-| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate + multimodal RAG + memory |
+| Recommended | 16GB | Full RAG + TinyLlama fine-tuning + distillation + prediction + agent + autonomous + multi-agent debate + multimodal RAG + memory + quantization + serving |
 | Ideal | 32GB or GPU | Phi-3/Mistral fine-tuning + faster everything |
 
 ## Project Structure
@@ -656,7 +779,12 @@ laptop-ai/
 ├── memory.py                # Phase 9: Memory engine — extract, store, retrieve
 ├── chat_memory.py           # Phase 9: Chat with persistent memory layer
 ├── memory.db                # Phase 9: SQLite entity graph (auto-created, gitignored)
-├── CHEATSHEET.pdf           # Enterprise AI concepts — 11-page reference
+├── phase11_quantization/    # Phase 11: Model compression
+│   └── README.md            # Steps, results, key concepts
+├── phase12_serving/         # Phase 12: Model serving
+│   ├── serving_test.py      # Concurrent request test for Ollama
+│   └── serving_test2.py     # Concurrent request test for llama.cpp server
+├── CHEATSHEET.pdf           # Enterprise AI concepts — 12-phase reference
 ├── requirements.txt         # Phase 1 dependencies
 ├── requirements_phase2.txt  # Phase 2 dependencies
 └── .gitignore
@@ -683,4 +811,4 @@ MIT
 
 ---
 
-*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 9-phase learning journey through the full enterprise AI stack, from retrieval to memory.*
+*Built by a non-engineer on a regular laptop with 16GB RAM and no GPU. Not another RAG tutorial — a 12-phase learning journey through the full enterprise AI stack, from retrieval to serving.*
