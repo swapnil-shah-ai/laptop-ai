@@ -1,0 +1,66 @@
+import urllib.request
+import json
+import time
+
+TICKETS = [
+    "My internet has been down for 3 days and nobody is responding to my complaints",
+    "How do I update my billing address on the portal?",
+    "Thanks for sending the technician so quickly, great service!",
+    "I'm being charged for a plan I never subscribed to. This is fraud.",
+    "Can you tell me the data limit on my current plan?",
+    "Network keeps dropping every evening between 7-9pm for the past week",
+    "I want to cancel my connection immediately",
+    "Your new app update is really smooth, love the interface",
+    "My router is making a buzzing noise and getting very hot",
+    "When will 5G be available in my area?"
+]
+
+LABELER = "phi3:mini"
+
+def call_ollama(model, prompt):
+    data = json.dumps({"model": model, "prompt": prompt, "stream": False}).encode()
+    req = urllib.request.Request("http://localhost:11434/api/generate", data=data, headers={"Content-Type": "application/json"})
+    response = urllib.request.urlopen(req, timeout=120)
+    return json.loads(response.read())["response"].strip()
+
+def label_ticket(ticket):
+    prompt = f"""You are a data labeling system. Read the customer support ticket and classify it.
+
+Reply ONLY in this exact format, nothing else:
+category: [billing / network / feedback / hardware / general]
+urgency: [high / medium / low]
+sentiment: [positive / neutral / negative]
+
+Ticket: {ticket}"""
+    return call_ollama(LABELER, prompt)
+
+def run():
+    print("PHASE 15: DATA LABELING")
+    print(f"Labeler: {LABELER} | Tickets: {len(TICKETS)}\n")
+
+    results = []
+    for i, ticket in enumerate(TICKETS):
+        print(f"Ticket {i+1}: {ticket[:60]}...")
+        print(f"  labeling...", end=" ", flush=True)
+        start = time.time()
+        labels = label_ticket(ticket)
+        print(f"({time.time()-start:.1f}s)")
+
+        cat = urg = sent = "?"
+        for line in labels.lower().split("\n"):
+            if "category:" in line: cat = line.split(":")[-1].strip()
+            if "urgency:" in line: urg = line.split(":")[-1].strip()
+            if "sentiment:" in line: sent = line.split(":")[-1].strip()
+
+        results.append({"ticket": ticket[:50], "category": cat, "urgency": urg, "sentiment": sent})
+        print(f"  > {cat} | {urg} | {sent}\n")
+
+    print("=" * 75)
+    print("LABELED DATASET")
+    print("=" * 75)
+    print(f"{'#':<4}{'Ticket':<52}{'Category':<12}{'Urgency':<10}{'Sentiment'}")
+    print("-" * 75)
+    for i, r in enumerate(results):
+        print(f"{i+1:<4}{r['ticket']:<52}{r['category']:<12}{r['urgency']:<10}{r['sentiment']}")
+
+run()

@@ -1,0 +1,90 @@
+import urllib.request
+import json
+import time
+
+MODELS = [
+    "phi3:mini",
+    "swapnil-phi3-q4km:latest",
+    "phi3:3.8b-mini-128k-instruct-q8_0"
+]
+
+JUDGE = "gemma4:e4b"
+
+EVAL_SET = [
+    {"question": "Why is the sky blue? Answer in one sentence.",
+     "expected": "Rayleigh scattering causes shorter wavelengths of sunlight to scatter more in the atmosphere, making it appear blue."},
+    {"question": "What is 15% of 200? Answer with just the number.",
+     "expected": "30"},
+    {"question": "Name the capital of Japan in one word.",
+     "expected": "Tokyo"},
+    {"question": "At what temperature does water boil in Celsius? Answer with just the number.",
+     "expected": "100"},
+    {"question": "Explain gravity in one sentence.",
+     "expected": "Gravity is the force that attracts objects with mass toward each other."}
+]
+
+def call_ollama(model, prompt):
+    data = json.dumps({"model": model, "prompt": prompt, "stream": False}).encode()
+    req = urllib.request.Request("http://localhost:11434/api/generate", data=data, headers={"Content-Type": "application/json"})
+    response = urllib.request.urlopen(req, timeout=300)
+    return json.loads(response.read())["response"].strip()
+
+def judge_response(question, expected, response):
+    prompt = f"""You are an evaluation judge. Score the AI response compared to the expected answer.
+
+Question: {question}
+Expected answer: {expected}
+Model response: {response}
+
+Score 1-10:
+1-2 = incoherent or completely wrong
+3-4 = partially relevant but mostly wrong
+5-6 = roughly correct but missing key details
+7-8 = correct and complete
+9-10 = accurate, complete, well-expressed
+
+Reply with ONLY a number 1-10. Nothing else."""
+    result = call_ollama(JUDGE, prompt)
+    for word in result.split():
+        try:
+            score = int(word.strip(".,;:()"))
+            if 1 <= score <= 10:
+                return score
+        except:
+            continue
+    return 0
+
+def run_eval():
+    print("PHASE 14: EVALUATION")
+    print(f"Judge: {JUDGE} | Models: {len(MODELS)} | Questions: {len(EVAL_SET)}")
+    print(f"Total calls: {len(MODELS) * len(EVAL_SET) * 2} (generate + judge)\n")
+
+    results = {}
+    for model in MODELS:
+        if "q2_K" in model: name = "Q2_K"
+        elif "q8_0" in model: name = "Q8_0"
+        elif "swapnil" in model: name = "Q4_K_M (hand)"
+        else: name = "Q4_0"
+
+        results[name] = []
+        print(f"--- {name} ---")
+        for i, item in enumerate(EVAL_SET):
+            print(f"  Q{i+1}: generating...", end=" ", flush=True)
+            response = call_ollama(model, item["question"])
+            print(f"judging...", end=" ", flush=True)
+            score = judge_response(item["question"], item["expected"], response)
+            results[name].append(score)
+            print(f"score: {score}/10")
+        avg = sum(results[name]) / len(results[name])
+        print(f"  Average: {avg:.1f}/10\n")
+
+    print("=" * 50)
+    print("SUMMARY")
+    print("=" * 50)
+    print(f"{'Model':<16}" + "".join(f"Q{i+1:<5}" for i in range(len(EVAL_SET))) + "Avg")
+    print("-" * 50)
+    for model, scores in results.items():
+        avg = sum(scores) / len(scores)
+        print(f"{model:<16}" + "".join(f"{s:<6}" for s in scores) + f"{avg:.1f}")
+
+run_eval()
