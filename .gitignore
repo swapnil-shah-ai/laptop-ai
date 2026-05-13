@@ -50,3 +50,5 @@ memory.db
 __pycache__/ 
 memory.db 
 __pycache__/ 
+chroma_multimodal_db/ 
+*.sqlite3 
