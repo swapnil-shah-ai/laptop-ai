@@ -18,25 +18,49 @@ TICKETS = [
 LABELER = "phi3:mini"
 
 def call_ollama(model, prompt):
-    data = json.dumps({"model": model, "prompt": prompt, "stream": False}).encode()
+    data = json.dumps({"model": model, "prompt": prompt, "stream": False, "options": {"temperature": 0}}).encode()
     req = urllib.request.Request("http://localhost:11434/api/generate", data=data, headers={"Content-Type": "application/json"})
     response = urllib.request.urlopen(req, timeout=120)
     return json.loads(response.read())["response"].strip()
 
 def label_ticket(ticket):
-    prompt = f"""You are a data labeling system. Read the customer support ticket and classify it.
-
-Reply ONLY in this exact format, nothing else:
-category: [billing / network / feedback / hardware / general]
-urgency: [high / medium / low]
-sentiment: [positive / neutral / negative]
-
-Ticket: {ticket}"""
+    prompt = (
+        "You are a data labeling system. Classify customer support tickets.\n\n"
+        "Example 1:\n"
+        "Ticket: \"I was charged twice for my last bill\"\n"
+        "category: billing\n"
+        "urgency: high\n"
+        "sentiment: negative\n\n"
+        "Example 2:\n"
+        "Ticket: \"How do I check my data balance?\"\n"
+        "category: general\n"
+        "urgency: low\n"
+        "sentiment: neutral\n\n"
+        "Example 3:\n"
+        "Ticket: \"Your technician fixed it in 10 minutes, amazing work\"\n"
+        "category: feedback\n"
+        "urgency: low\n"
+        "sentiment: positive\n\n"
+        "Example 4:\n"
+        "Ticket: \"My connection drops every evening for the past week\"\n"
+        "category: network\n"
+        "urgency: high\n"
+        "sentiment: negative\n\n"
+        "Example 5:\n"
+        "Ticket: \"The router is overheating and making noise\"\n"
+        "category: hardware\n"
+        "urgency: high\n"
+        "sentiment: negative\n\n"
+        "Now classify this ticket. Reply ONLY in the exact format shown above. "
+        "Do not add explanations. Do not use markdown. Do not add any text before or after the three lines.\n\n"
+        "Ticket: \"" + ticket + "\""
+    )
     return call_ollama(LABELER, prompt)
 
 def run():
-    print("PHASE 15: DATA LABELING")
-    print(f"Labeler: {LABELER} | Tickets: {len(TICKETS)}\n")
+    print("PHASE 15: DATA LABELING (with prompt engineering)")
+    print(f"Labeler: {LABELER} | Tickets: {len(TICKETS)}")
+    print("Changes: few-shot examples + temperature 0\n")
 
     results = []
     for i, ticket in enumerate(TICKETS):
